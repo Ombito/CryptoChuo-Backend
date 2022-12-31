@@ -1,7 +1,7 @@
 from django import forms
-from .models import User
+from .models import Customer
 
-class UserRegistrationForm(forms.ModelForm):
+class CustomerRegistrationForm(forms.ModelForm):
     class Meta: 
-        model = User
+        model = Customer
         fields = "__all__"

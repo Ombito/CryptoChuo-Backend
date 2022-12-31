@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-class User(models.Model):
+class Customer(models.Model):
     first_name=models.CharField(max_length=16,null=True)
     last_name=models.CharField(max_length=16, null=True)
     email = models.EmailField(unique= True,null = True)

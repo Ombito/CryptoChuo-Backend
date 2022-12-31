@@ -26,15 +26,15 @@
 from django.shortcuts import render
 from . import serializers
 # Create your views here.
-from django.contrib.auth.models import User
+# from django.contrib.auth.models import Customer
 from rest_framework import viewsets
 from rest_framework import permissions
 # from views import UserSerializer
 
 from django.http import HttpResponse, JsonResponse
 from rest_framework import viewsets 
-from cryptochuo.serializers import UserSerializer,UserRegisterSerializer
-from cryptochuo.models import User
+from cryptochuo.serializers import CustomerSerializer,CustomerRegisterSerializer
+from cryptochuo.models import Customer
 from rest_framework.parsers import JSONParser
 from django.http.response import JsonResponse
 from rest_framework.response import Response
@@ -42,20 +42,19 @@ from rest_framework import generics, permissions
 # from django.contrib.auth import login,authenticate
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
-from django.contrib.auth.models import User
 
 from rest_framework.authtoken.models import Token
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework import status
 # Create your views here.
-class UserViewSet(viewsets.ModelViewSet):
-    serializer_class = UserSerializer
-    queryset = User.objects.all()
+class CustomerViewSet(viewsets.ModelViewSet):
+    serializer_class = CustomerSerializer
+    queryset = Customer.objects.all()
     
     def register_user(request):
         if request.method == "POST":
-            serializer = UserRegisterSerializer(data=request.data)
+            serializer = CustomerRegisterSerializer(data=request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=201) 

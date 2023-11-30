@@ -18,9 +18,9 @@ class User(db.Model,SerializerMixin):
     
 
     student_courses = db.relationship('Courses', backref='user')
-    all_oders = db.relationship('Orders', backref='user')
+    all_orders = db.relationship('Orders', backref='user')
 
-    serialize_rules=('-red_flag_records.user','-intervention_records.user',)
+    serialize_rules=('-student_courses','-all_orders',)
 
     @hybrid_property
     def password_hash(self):
@@ -35,18 +35,25 @@ class User(db.Model,SerializerMixin):
         return bcrypt.check_password_hash(self._password_hash,password.encode("utf-8"))
 
 
-class Course(db.model):
+class Course(db.model,SerializerMixin):
     __tablename__ = 'courses'
 
     id = db.Column(db.Integer, primary_key=True)
     course = db.Column(db.String(100))
     email = db.Column(db.String(100))
     username = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     serialize_rules=('-user.student_courses',)
 
-class Order(db.Model,SerializerMixin):
+class OrderRecord(db.Model,SerializerMixin):
     __tablename__ = 'orders'
+
+    id = db.Column(db.Integer, primary_key=True)
+    item=db.Column(db.String)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    description=db.Column(db.String)
+
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
-    serialize_rules=('-user.orders',)
+    serialize_rules=('-user.all_orders',)

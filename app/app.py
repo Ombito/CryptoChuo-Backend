@@ -1,6 +1,6 @@
 from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, request, session, make_response
-from flask_restful import Api, Resource, reqparse
+from flask_restful import Api, Resource
 from models import User, db, Course, OrderRecord
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
@@ -13,7 +13,8 @@ CORS(app,support_credentials=True)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key='qwwerrtyyu123'
+# app.secret_key=os.environ['SECRET_KEY']
+
 db.init_app(app)
 api = Api(app)
 migrate = Migrate(app, db)

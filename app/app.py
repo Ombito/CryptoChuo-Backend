@@ -84,13 +84,96 @@ class UserResource(Resource):
         users = [user.to_dict() for user in User.query.all()]
 
         return make_response(jsonify(users),200) 
+
+
+    # course route
+class CourseResource(Resource):
+    def get(self):
+        all_courses = [course.to_dict() for course in Course.query.all()]
+        
+        return make_response(jsonify(all_courses),200)
+   
+        # post course records
+    def post(self):
+        data = request.get_json()
+
+        title=data.get('title')
+        description=data.get('description')
+        image = data.get('image')
+        video = data.get('video')
+        location = data.get('location')
+        status = data.get('status')
+        user_id=data.get('user_id')
+       
+        if image and video and location and status:
+            new_course = Course( title=title, description= description, image=image, video=video, location=location, status=status, user_id=user_id)
+            
+            db.session.add(new_course)
+            db.session.commit()
+
+            return make_response(new_course.to_dict(), 201) 
+        return {"error": "Course details must be added"}, 422
     
+
+class CourseRecordById(Resource):
+    #get course by id
+    def get(self,id):
+        pass
+        course=Course.query.filter_by(id=id).first().to_dict()
+
+        return make_response(jsonify(course),200)
+    
+        
+class CourseRecordForUser(Resource):
+        # post course record for a certain user
+    def post(self, user_id):
+        try:
+            data = request.get_json()
+
+            data['user_id'] = user_id
+
+            my_course = Course(**data)
+            db.session.add(my_course)
+            db.session.commit()
+
+            return make_response(jsonify(my_course.to_dict()), 201)
+
+        except Exception as e:
+            return make_response(jsonify({"error": str(e)}), 500)
+        
+
+        # edit a course record    
+    def patch(self,id):
+        my_course = Course.query.filter_by(id=id).first()
+
+        if my_course:
+            for attr in request.get_json():
+                setattr(my_course,attr, request.get_json()[attr])
+
+            db.session.add(my_course)
+            db.session.commit()
+            
+            return make_response(jsonify(my_course.to_dict(), 200))
+        
+        return {"error": "Course record not found"}, 404
+
+        # delete a course record
+    def delete(self,id):
+        my_course=Course.query.get(id)
+
+        if my_course:
+            db.session.delete(my_course)
+            db.session.commit()
+            return {"message": "Course record deleted successfully"}, 200
+        else:
+            return {"error": "Course record not found"}, 404
+
+
     # orders route
 class OrderResource(Resource):
 
         # get all order records
     def get(self):
-        
         all_orders = [order.to_dict() for  order in OrderRecord.query.all()]
         
         return make_response(jsonify(all_orders),200)

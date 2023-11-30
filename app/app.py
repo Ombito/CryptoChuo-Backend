@@ -26,12 +26,31 @@ class Index(Resource):
         return make_response(response_body,status,headers)
     
     # login route
-class Login(Resource):
-    def get(self):
+class LoginAdmin(Resource):
+    def post(self):
+        username  = request.get_json().get('username')
+        password = request.get_json().get("password")
+
+        admin = Admin.query.filter(Admin.username == username).first()
+        if admin and admin.authenticate(password):
+            session['admin_id']=admin.id
+            return make_response(jsonify(admin.to_dict()),201)
+        else:
+            return {"error":"username or password is incorrect"},401
 
     #logout resource
 class Logout(Resource):
+    def delete(self):
+        if session.get('user_id'):
+            session['user_id']=None
+            return {"message": "User logged out successfully"}
+        else:
+            return {"error":"User must be logged in to logout"}
 
-    # signup resource
-class Signup(Resource):
-    def post(self):
+#     # signup resource
+# class Signup(Resource):
+#     def post(self):
+
+
+if __name__ == '__main__':
+    app.run(port=5555, debug=True)

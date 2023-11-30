@@ -26,15 +26,14 @@ class Index(Resource):
         return make_response(response_body,status,headers)
     
     # login route
-class LoginAdmin(Resource):
+class LoginUser(Resource):
     def post(self):
-        username  = request.get_json().get('username')
+        email  = request.get_json().get('email')
         password = request.get_json().get("password")
-
-        admin = Admin.query.filter(Admin.username == username).first()
-        if admin and admin.authenticate(password):
-            session['admin_id']=admin.id
-            return make_response(jsonify(admin.to_dict()),201)
+        user = User.query.filter(User.email == email).first()
+        if user and user.authenticate(password):
+            session['user_id']=user.id
+            return user.to_dict(),201
         else:
             return {"error":"username or password is incorrect"},401
 
@@ -47,9 +46,75 @@ class Logout(Resource):
         else:
             return {"error":"User must be logged in to logout"}
 
-#     # signup resource
-# class Signup(Resource):
-#     def post(self):
+     # signup resource
+class SignupUser(Resource):
+    def post(self):
+        data = request.get_json()
+
+        full_name = data.get('full_name')
+        username = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+        
+
+        if full_name and username and email and password:
+            new_user = User(full_name=full_name, username=username, email=email)
+            new_user.password_hash = password
+            db.session.add(new_user)
+            db.session.commit()
+
+            session['user_id']=new_user.id
+
+            return new_user.to_dict(), 201
+        return {"error": "user details must be added"}, 422
+
+ #check session   
+class CheckSession(Resource):
+    def get(self):
+        user = User.query.filter(User.id == session.get('user_id')).first()
+        if user:
+            return jsonify(user.to_dict()),200
+        else:
+            return {"error": "user not in session:please signin/login"},401
+
+    #  all users route
+class UserResource(Resource):
+    def get(self):
+        users = [user.to_dict() for user in User.query.all()]
+
+        return make_response(jsonify(users),200) 
+    
+    # orders route
+class OrderResource(Resource):
+
+        # get all order records
+    def get(self):
+        
+        all_orders = [order.to_dict() for  order in Order.query.all()]
+        
+        return make_response(jsonify(all_orders),200)
+
+        # post order records
+    def post(self):
+        data = request.get_json()
+
+        title=data.get('title')
+        description=data.get('description')
+        image = data.get('image')
+        video = data.get('video')
+        location = data.get('location')
+        status = data.get('status')
+        user_id=data.get('user_id')
+
+        if image and video and location:
+            new_order = Order(title=title, description=description, image=image, video=video, location=location, status=status, user_id=user_id)
+
+            db.session.add(new_order)
+            db.session.commit()
+      
+            return make_response(jsonify(new_order.to_dict(), 201))
+        
+        return {"error": "Order details must be added"}, 422
 
 
 if __name__ == '__main__':

@@ -1,8 +1,9 @@
 from flask_cors import CORS, cross_origin
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource, reqparse
-from models import User, db
+from models import User, db, Course, OrderRecord
 from flask_migrate import Migrate
+from werkzeug.exceptions import NotFound
 import os
 
 
@@ -90,7 +91,7 @@ class OrderResource(Resource):
         # get all order records
     def get(self):
         
-        all_orders = [order.to_dict() for  order in Order.query.all()]
+        all_orders = [order.to_dict() for  order in OrderRecord.query.all()]
         
         return make_response(jsonify(all_orders),200)
 
@@ -98,7 +99,6 @@ class OrderResource(Resource):
     def post(self):
         data = request.get_json()
 
-        title=data.get('title')
         description=data.get('description')
         image = data.get('image')
         video = data.get('video')
@@ -107,7 +107,7 @@ class OrderResource(Resource):
         user_id=data.get('user_id')
 
         if image and video and location:
-            new_order = Order(title=title, description=description, image=image, video=video, location=location, status=status, user_id=user_id)
+            new_order = OrderRecord(description=description, image=image, video=video, location=location, status=status, user_id=user_id)
 
             db.session.add(new_order)
             db.session.commit()
@@ -115,6 +115,57 @@ class OrderResource(Resource):
             return make_response(jsonify(new_order.to_dict(), 201))
         
         return {"error": "Order details must be added"}, 422
+
+class OrderRecordById(Resource):
+    def get(self,id):
+        record=OrderRecord.query.filter_by(id=id).first().to_dict()
+        
+
+        return make_response(jsonify(record),200)
+    
+        # edit an order record
+    def patch(self, id):
+        order = OrderRecord.query.filter_by(id=id).first()
+
+        if order:
+            for attr in request.get_json():
+                setattr(order,attr,request.get_json()[attr])
+
+                db.session.add(order)
+                db.session.commit()
+            return make_response(jsonify(order.to_dict(), 200)) 
+        
+        
+        return {"error": "Order record not found"}, 404
+
+
+        # delete an order record from the db
+    def delete(self, id):
+        order = OrderRecord.query.filter_by(id=id).first()
+
+        if order:
+            db.session.delete(order)
+            db.session.commit()
+            return {"message": "Order record deleted successfully"}, 200
+        else:
+            return {"error": "Order record not found"}, 404
+
+
+api.add_resource(Index,'/', endpoint='landing')
+api.add_resource(UserResource, '/users', endpoint='users')
+api.add_resource(CheckSession,'/session_user',endpoint='session_user' )
+api.add_resource(SignupUser, '/signup_user', endpoint='signup')
+api.add_resource(LoginUser, '/login_user', endpoint='login')
+api.add_resource(Logout, '/logout', endpoint='logout')
+api.add_resource(OrderResource,'/order', endpoint='order')
+
+@app.errorhandler(NotFound)
+def handle_not_found(e):
+    response = make_response(
+        "Not Found:The requested endpoint(resource) does not exist",
+        404
+        )
+    return response
 
 
 if __name__ == '__main__':

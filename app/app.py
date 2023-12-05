@@ -87,6 +87,7 @@ class UserResource(Resource):
         return make_response(jsonify(users),200) 
 
 
+
     # course route
 class CourseResource(Resource):
     def get(self):

@@ -15,12 +15,12 @@ class User(db.Model,SerializerMixin):
     email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(50), unique=True)
     _password_hash = db.Column(db.String(100))
+
+
+    enrolled_courses = db.relationship('Enrollment', back_populates='user')
+    orders = db.relationship('OrderRecord', back_populates='user')
     
-
-    student_courses = db.relationship('Courses', backref='user')
-    all_orders = db.relationship('Orders', backref='user')
-
-    serialize_rules=('-student_courses','-all_orders',)
+    serialize_rules = ('-enrolled_courses.user', '-orders.user',)
 
     @hybrid_property
     def password_hash(self):
@@ -35,25 +35,48 @@ class User(db.Model,SerializerMixin):
         return bcrypt.check_password_hash(self._password_hash,password.encode("utf-8"))
 
 
-class Course(db.model,SerializerMixin):
+class Course(db.model, SerializerMixin):
     __tablename__ = 'courses'
 
     id = db.Column(db.Integer, primary_key=True)
-    course = db.Column(db.String(100))
-    email = db.Column(db.String(100))
-    username = db.Column(db.String(50))
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    course_name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    enrollment_date = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', back_populates='student_courses')
+
     serialize_rules=('-user.student_courses',)
 
-class OrderRecord(db.Model,SerializerMixin):
+
+class OrderRecord(db.Model, SerializerMixin):
     __tablename__ = 'orders'
 
     id = db.Column(db.Integer, primary_key=True)
-    item=db.Column(db.String)
-    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    description=db.Column(db.String)
+    item = db.Column(db.String, nullable=False)
+    description = db.Column(db.String, nullable=False)
+    order_date = db.Column(db.DateTime, default=db.func.current_timestamp())
+    quantity = db.Column(db.Integer, nullable=False)
+    
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    user = db.relationship('User', back_populates='all_orders')
+
+    merchandise_id = db.Column(db.Integer, db.ForeignKey('merchandises.id'))
+    merchandise = db.relationship('Merchandise', back_populates='orders')
+
     serialize_rules=('-user.all_orders',)
+
+class Merchandise(db.Model):
+    __tablename__ = 'merchandises'
+
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+    price = db.Column(db.Float, nullable=False)
+    
+    orders = db.relationship('OrderRecord', back_populates='merchandise')
+
+    serialize_rules = ('-orders.merchandise',)

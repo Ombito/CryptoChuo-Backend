@@ -1,4 +1,4 @@
-from flask_cors import CORS, cross_origin
+from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
 from models import User, db, Course, OrderRecord
@@ -6,10 +6,8 @@ from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
 
-
 app = Flask(__name__)
 CORS(app,support_credentials=True)
-
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -99,16 +97,15 @@ class CourseResource(Resource):
     def post(self):
         data = request.get_json()
 
-        title=data.get('title')
+        course_name=data.get('course_name')
         description=data.get('description')
         image = data.get('image')
-        video = data.get('video')
-        location = data.get('location')
-        status = data.get('status')
+        price = data.get('price')
+        enrollment_date = data.get('enrollment_date')
         user_id=data.get('user_id')
        
-        if image and video and location and status:
-            new_course = Course( title=title, description= description, image=image, video=video, location=location, status=status, user_id=user_id)
+        if image and price and enrollment_date:
+            new_course = Course( course_name=course_name, description= description, image=image, price=price, enrollment_date=enrollment_date, user_id=user_id)
             
             db.session.add(new_course)
             db.session.commit()

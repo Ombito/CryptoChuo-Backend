@@ -14,7 +14,7 @@ class User(db.Model, SerializerMixin):
     full_name = db.Column(db.String(100))
     email = db.Column(db.String(100), unique=True)
     username = db.Column(db.String(50), unique=True)
-    _password_hash = db.Column(db.String(100))
+    _password_hash = db.Column(db.String(100), nullable=False)
 
     courses = db.relationship('Course', back_populates='user')
     orders = db.relationship('OrderRecord', back_populates='user')

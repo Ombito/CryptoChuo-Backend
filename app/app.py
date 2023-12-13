@@ -1,20 +1,22 @@
 from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
-from models import User, db, Course, OrderRecord
+from models import User, db, Course, OrderRecord, bcrypt
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
 from datetime import timedelta
 from flask_session import Session
+import secrets
 
 
 app = Flask(__name__)
-CORS(app,support_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, support_credentials=True)
+
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.secret_key= ['SECRET_KEY']
+app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
@@ -27,7 +29,6 @@ api = Api(app)
 migrate = Migrate(app, db)
 Session(app)
 
-
     # home route
 class Index(Resource):
     def get(self):
@@ -39,21 +40,62 @@ class Index(Resource):
     # login route
 class LoginUser(Resource):
     def post(self):
-        email  = request.get_json().get('email')
-        password = request.get_json().get("password")
-        user = User.query.filter(User.email == email).first()
+        try:
+            data = request.get_json()
+            print("Received JSON data:", data)
 
-        if user:
-            if user.authenticate(password):
-                session['user_id']=user.id
+            email  = data.get('email')
+            password = data.get("password")
+            user = User.query.filter(User.email == email).first()
+
+            try:
+                if email and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+                    session['user_id']=user.id
+                    session['user_type'] = 'user'
+
+                    return make_response(jsonify(user.to_dict()), 201)
+                        
+                else:
+                    return make_response(jsonify({"error": "Invalid email or password"}), 401)
+                
+            except bcrypt.exceptions as e:
+                app.logger.error(f"Invalid password hash: {str(e)}")
+                return make_response(jsonify({"error": "Invalid password hash"}), 500)
+            
+            # print("User not registered.") 
+            # return make_response(jsonify({"error": "User not Registered"}), 404)
+        
+        except Exception as e:
+            print(f"Error during login: {str(e)}")
+            return make_response(jsonify({"error": "An unexpected error occurred"}), 500)
+   
+     # signup resource
+class SignupUser(Resource):
+    def post(self):
+        try:
+            data = request.get_json()
+
+            full_name = data.get('full_name')
+            username = data.get('username')
+            email = data.get('email')
+            password = data.get('password')
+
+            if full_name and username and email and password:
+                new_user = User(full_name=full_name, username=username, email=email)
+                new_user.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+                db.session.add(new_user)
+                db.session.commit()
+
+                session['user_id']=new_user.id
                 session['user_type'] = 'user'
 
-                return make_response(jsonify(user.to_dict()), 201)
-                
-            else:
-                return make_response(jsonify({"error": "username or password is incorrect"}), 401)
-        print("User not registered.") 
-        return make_response(jsonify({"error": "User not Registered"}), 404)
+                return make_response(jsonify(new_user.to_dict()),201)
+            
+            return make_response(jsonify({"error": "user details must be added"}),422)
+    
+        except Exception as e:
+            return make_response(jsonify({"error": str(e)}), 500)
+
 
     #logout resource
 class Logout(Resource):
@@ -64,29 +106,6 @@ class Logout(Resource):
         else:
             return {"error":"User must be logged in to logout"}
 
-     # signup resource
-class SignupUser(Resource):
-    def post(self):
-        data = request.get_json()
-
-        full_name = data.get('full_name')
-        username = data.get('username')
-        email = data.get('email')
-        password = data.get('password')
-        
-
-        if full_name and username and email and password:
-            new_user = User(full_name=full_name, username=username, email=email)
-            new_user.password_hash = password
-            db.session.add(new_user)
-            db.session.commit()
-
-            session['user_id']=new_user.id
-            session['user_type'] = 'user'
-
-            return make_response(jsonify(new_user.to_dict()),201)
-        
-        return make_response(jsonify({"error": "user details must be added"}),422)
 
  #check session   
 class CheckSession(Resource):
@@ -264,6 +283,7 @@ api.add_resource(CourseRecordForUser, '/courses/user/<int:user_id>', endpoint='c
 api.add_resource(CourseRecordById, '/courses/<int:id>', endpoint='coursebyid')
 api.add_resource(OrderResource,'/orders', endpoint='order')
 api.add_resource(OrderRecordById, '/orders/<int:id>', endpoint='ordersbyid')
+
 
 @app.errorhandler(NotFound)
 def handle_not_found(e):

@@ -5,17 +5,28 @@ from models import User, db, Course, OrderRecord
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
+from datetime import timedelta
+from flask_session import Session
+
 
 app = Flask(__name__)
 CORS(app,support_credentials=True)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.secret_key=os.environ['SECRET_KEY']
+app.secret_key= ['SECRET_KEY']
+app.config['SESSION_TYPE'] = 'filesystem'
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(days=7)
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+app.config['SESSION_FILE_DIR'] = 'session_dir'
+app.config['JSONIFY_PRETTYPRINT_REGULAR']= True
+
 
 db.init_app(app)
 api = Api(app)
 migrate = Migrate(app, db)
+Session(app)
+
 
     # home route
 class Index(Resource):
@@ -31,11 +42,18 @@ class LoginUser(Resource):
         email  = request.get_json().get('email')
         password = request.get_json().get("password")
         user = User.query.filter(User.email == email).first()
-        if user and user.authenticate(password):
-            session['user_id']=user.id
-            return user.to_dict(),201
-        else:
-            return {"error":"username or password is incorrect"},401
+
+        if user:
+            if user.authenticate(password):
+                session['user_id']=user.id
+                session['user_type'] = 'user'
+
+                return make_response(jsonify(user.to_dict()), 201)
+                
+            else:
+                return make_response(jsonify({"error": "username or password is incorrect"}), 401)
+        print("User not registered.") 
+        return make_response(jsonify({"error": "User not Registered"}), 404)
 
     #logout resource
 class Logout(Resource):
@@ -64,9 +82,11 @@ class SignupUser(Resource):
             db.session.commit()
 
             session['user_id']=new_user.id
+            session['user_type'] = 'user'
 
-            return new_user.to_dict(), 201
-        return {"error": "user details must be added"}, 422
+            return make_response(jsonify(new_user.to_dict()),201)
+        
+        return make_response(jsonify({"error": "user details must be added"}),422)
 
  #check session   
 class CheckSession(Resource):

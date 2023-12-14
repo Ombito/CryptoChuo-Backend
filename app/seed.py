@@ -1,44 +1,80 @@
 from app import db, app
-from models import User, Course, OrderRecord, Merchandise, Enrollment
-
+from models import User, Course, Category, CourseCategory, CourseDuration, CourseDurationAssociation, Level, CourseLevel, OrderRecord, Merchandise, Enrollment
+import datetime
+import random
 
 app.app_context().push()
+db.drop_all()
 db.create_all()
 
 with app.app_context():
-    user1 = User(full_name='John Doe', email='john.doe@example.com', username='john_doe')
-    user1.password_hash = 'hashed_password'
-    db.session.add(user1)
-
-    user2 = User(full_name='Jane Doe', email='jane.doe@example.com', username='jane_doe')
-    user2.password_hash = 'hashed_password'
-    db.session.add(user2)
-
-    
-    course1 = Course(course_name='Introduction to Python', description='Learn Python programming', price=49.99, user_id=user1.id)
-    db.session.add(course1)
-    course2 = Course(course_name='Web Development Basics', description='Introduction to web development', price=59.99, user_id=user2.id)
-    db.session.add(course2)
-
-    
-    merchandise1 = Merchandise(name='T-Shirt', description='Comfortable cotton T-Shirt', price=19.99, image='tshirt.jpg')
-    db.session.add(merchandise1)
-    merchandise2 = Merchandise(name='Mug', description='Coffee mug with a cool design', price=9.99, image='mug.jpg')
-    db.session.add(merchandise2)
-
-    
-    enrollment1 = Enrollment(course_id=course1.id, user_id=user1.id)
-    db.session.add(enrollment1)
-    enrollment2 = Enrollment(course_id=course2.id, user_id=user2.id)
-    db.session.add(enrollment2)
-
-    
-    order1 = OrderRecord(item='Laptop', description='Gaming laptop', quantity=1, user_id=user1.id, merchandise_id=merchandise1.id)
-    db.session.add(order1)
-    order2 = OrderRecord(item='Book', description='Python Programming Guide', quantity=2, user_id=user2.id, merchandise_id=merchandise2.id)
-    db.session.add(order2)
-
-    
+    # Create users
+    for i in range(10):
+        user = User(
+            full_name=f'User{i}',
+            email=f'user{i}@example.com',
+            username=f'user{i}',
+            _password_hash='hashed_password'
+        )
+        db.session.add(user)
     db.session.commit()
+
+    # Create categories, durations, and levels (same as before)
+    categories_data = ['Programming', 'Mathematics', 'Science', 'Art', 'History', 'Music', 'Languages', 'Fitness', 'Cooking', 'Business']
+
+    for category_name in categories_data:
+        category = Category(name=category_name)
+        db.session.add(category)
+
+    # Create durations
+    durations_data = ['1 Week', '2 Weeks', '1 Month', '2 Months', '3 Months', '6 Months', '1 Year', '2 Years', 'Lifetime', 'Flexible']
+
+    for duration_name in durations_data:
+        duration = CourseDuration(duration=duration_name)
+        db.session.add(duration)
+
+    # Create levels
+    levels_data = ['Beginner', 'Intermediate', 'Advanced', 'Expert', 'All Levels', 'Introductory', 'Intermediate-Advanced', 'Masterclass', 'Professional', 'Custom']
+
+    for level_name in levels_data:
+        level = Level(name=level_name)
+        db.session.add(level)
+
+    db.session.commit()
+
+    # Create courses
+    for i in range(10):
+        user = db.session.query(User).get(random.randint(1, 10))
+        course = Course(
+            title=f'Course {i}',
+            description=f'This is course number {i}.',
+            price=19.99 + i,
+            rating=random.uniform(3.0, 5.0),
+            enrollment_date=datetime.datetime.now(),
+            user=user
+        )
+        db.session.add(course)
+        db.session.commit()
+
+        # Add categories, durations, and levels to the course
+        category = db.session.query(Category).get(1)
+        duration = db.session.query(CourseDuration).get(1)
+        level = db.session.query(Level).get(1)
+
+        if category:
+            course_category = CourseCategory(course_id=course.id, category_id=category.id)
+            db.session.add(course_category)
+
+        if duration:
+            course_duration = CourseDurationAssociation(course_id=course.id, duration_id=duration.id)
+            db.session.add(course_duration)
+
+        if level:
+            course_level = CourseLevel(course_id=course.id, level_id=level.id)
+            db.session.add(course_level)
+
+    db.session.commit()
+
+    # Create enrollments, merchandises, orders (same as before)
 
     print('Database seeded successfully.')

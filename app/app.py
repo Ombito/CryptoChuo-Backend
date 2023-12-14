@@ -1,7 +1,7 @@
 from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
-from models import User, db, Course, OrderRecord, bcrypt
+from models import User, db, Course, OrderRecord, Category, CourseDuration, CourseLevel, Merchandise, bcrypt
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
@@ -136,15 +136,17 @@ class CourseResource(Resource):
     def post(self):
         data = request.get_json()
 
-        course_name=data.get('course_name')
+        title=data.get('title')
         description=data.get('description')
         image = data.get('image')
         price = data.get('price')
+        duration = data.get('duration')
+        rating = data.get('rating')
         enrollment_date = data.get('enrollment_date')
         user_id=data.get('user_id')
        
         if image and price and enrollment_date:
-            new_course = Course( course_name=course_name, description= description, image=image, price=price, enrollment_date=enrollment_date, user_id=user_id)
+            new_course = Course( title=title, description= description, image=image, price=price, duration=duration, rating=rating, enrollment_date=enrollment_date, user_id=user_id)
             
             db.session.add(new_course)
             db.session.commit()
@@ -206,6 +208,33 @@ class CourseRecordForUser(Resource):
         else:
             return {"error": "Course record not found"}, 404
 
+
+    #filter course by category name
+class CourseCategoryResource(Resource):
+    def get(self,name):
+        pass
+        category=Category.query.filter_by(name=name).first().to_dict()
+
+        return make_response(jsonify(category),200)
+
+
+    #filter course by duration
+class CourseDurationResource(Resource):
+    def get(self, duration):
+        pass
+        duration=CourseDuration.query.filter_by(duration=duration).first().to_dict()
+
+        return make_response(jsonify(duration),200)
+    
+
+    #filter course by level
+class CourseLevelResource(Resource):
+    def get(self, level):
+        pass
+        level=CourseLevel.query.filter_by(level=level).first().to_dict()
+
+        return make_response(jsonify(level),200)
+    
 
     # orders route
 class OrderResource(Resource):
@@ -272,6 +301,34 @@ class OrderRecordById(Resource):
             return {"error": "Order record not found"}, 404
 
 
+    # merchandise route
+class MerchandiseResource(Resource):
+    def get(self):
+        all_merchandises = [merchandise.to_dict() for merchandise in Merchandise.query.all()]
+        
+        return make_response(jsonify(all_merchandises),200)
+   
+        # post merchandise records
+    def post(self):
+        data = request.get_json()
+
+        name=data.get('name')
+        description=data.get('description')
+        image = data.get('image')
+        price = data.get('price')
+        rating = data.get('rating')
+
+       
+        if image and name and price and description:
+            new_merchandise = Merchandise( name=name, description= description, image=image, price=price, rating=rating, )
+            
+            db.session.add(new_merchandise)
+            db.session.commit()
+
+            return make_response(new_merchandise.to_dict(), 201) 
+        return {"error": "Merchandise details must be added"}, 422
+    
+
 api.add_resource(Index,'/', endpoint='landing')
 api.add_resource(UserResource, '/users', endpoint='users')
 api.add_resource(CheckSession,'/session_user',endpoint='session_user' )
@@ -281,9 +338,14 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(CourseResource, '/courses/', endpoint='courses')
 api.add_resource(CourseRecordForUser, '/courses/user/<int:user_id>', endpoint='courses_for_user')
 api.add_resource(CourseRecordById, '/courses/<int:id>', endpoint='coursebyid')
+api.add_resource(CourseCategoryResource, '/courses/<category_name>', endpoint='coursebycategory')
+api.add_resource(CourseDurationResource, '/courses/filter/<int:duration>', 
+endpoint='coursebyduration')
+api.add_resource(CourseLevelResource, '/courses/filter/<level>', 
+endpoint='coursebylevel')
 api.add_resource(OrderResource,'/orders', endpoint='order')
 api.add_resource(OrderRecordById, '/orders/<int:id>', endpoint='ordersbyid')
-
+api.add_resource(MerchandiseResource, '/merchandises/', endpoint='merchandises')
 
 @app.errorhandler(NotFound)
 def handle_not_found(e):

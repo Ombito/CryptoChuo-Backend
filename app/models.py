@@ -38,18 +38,80 @@ class Course(db.Model, SerializerMixin):
     __tablename__ = 'courses'
 
     id = db.Column(db.Integer, primary_key=True)
-    course_name = db.Column(db.String(100), nullable=False)
+    title = db.Column(db.String(100), nullable=False)
     image = db.Column(db.String(100))
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
     enrollment_date = db.Column(db.DateTime, default=db.func.current_timestamp())
 
     enrollments = db.relationship('Enrollment', back_populates='course')
+    categories = db.relationship('CourseCategory', back_populates='course')
+    durations = db.relationship('CourseDurationAssociation', back_populates='course')
+    levels = db.relationship('CourseLevel', back_populates='course')
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     user = db.relationship('User', back_populates='courses')
 
-    serialize_rules = ('-enrollments.course', '-user.courses',)
+    duration_associations = db.relationship('CourseDurationAssociation', back_populates='course', overlaps="durations")
+
+    serialize_rules = ('-enrollments.course', '-user.courses', '-categories.course', '-durations.course', '-levels.course',)
+
+
+class Category(db.Model, SerializerMixin):
+    __tablename__ = 'categories'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), unique=True, nullable=False)
+
+    courses = db.relationship('CourseCategory', back_populates='category')
+
+
+class CourseCategory(db.Model, SerializerMixin):
+    __tablename__ = 'course_categories'
+
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('categories.id'), primary_key=True)
+
+    course = db.relationship('Course', back_populates='categories')
+    category = db.relationship('Category', back_populates='courses')
+
+
+class CourseDuration(db.Model, SerializerMixin):
+    __tablename__ = 'course_durations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    duration = db.Column(db.String(20), unique=True, nullable=False)
+
+    courses = db.relationship('CourseDurationAssociation', back_populates='duration')
+
+class CourseDurationAssociation(db.Model, SerializerMixin):
+    __tablename__ = 'course_duration_association'
+
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    duration_id = db.Column(db.Integer, db.ForeignKey('course_durations.id'), primary_key=True)
+
+    course = db.relationship('Course', back_populates='duration_associations')
+    duration = db.relationship('CourseDuration', back_populates='courses')
+
+
+class Level(db.Model, SerializerMixin):
+    __tablename__ = 'levels'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(20), unique=True, nullable=False)
+
+    courses = db.relationship('CourseLevel', back_populates='level')
+
+
+class CourseLevel(db.Model, SerializerMixin):
+    __tablename__ = 'course_levels'
+
+    course_id = db.Column(db.Integer, db.ForeignKey('courses.id'), primary_key=True)
+    level_id = db.Column(db.Integer, db.ForeignKey('levels.id'), primary_key=True)
+
+    course = db.relationship('Course', back_populates='levels')
+    level = db.relationship('Level', back_populates='courses')
 
 
 class OrderRecord(db.Model, SerializerMixin):
@@ -79,6 +141,7 @@ class Merchandise(db.Model, SerializerMixin):
     description = db.Column(db.Text, nullable=False)
     image = db.Column(db.String(100))
     price = db.Column(db.Float, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
 
     orders = db.relationship('OrderRecord', back_populates='merchandise')
 

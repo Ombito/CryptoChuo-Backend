@@ -20,7 +20,7 @@ class User(db.Model, SerializerMixin):
     orders = db.relationship('OrderRecord', back_populates='user')
     enrollments = db.relationship('Enrollment', back_populates='user')
 
-    serialize_rules = ('-courses.user', '-orders.user', '-enrollments.user',)
+    serialize_rules = ('-courses.user', '-orders.user', '-enrollments.user._password_hash',)
 
     @hybrid_property
     def password_hash(self):

@@ -330,22 +330,30 @@ class MerchandiseResource(Resource):
     
 
 api.add_resource(Index,'/', endpoint='landing')
+
+    # user resources
 api.add_resource(UserResource, '/users', endpoint='users')
 api.add_resource(CheckSession,'/session_user',endpoint='session_user' )
 api.add_resource(SignupUser, '/signup_user', endpoint='signup')
 api.add_resource(LoginUser, '/login_user', endpoint='login')
 api.add_resource(Logout, '/logout', endpoint='logout')
-api.add_resource(CourseResource, '/courses/', endpoint='courses')
+
+    #course resources
+api.add_resource(CourseResource, '/courses', endpoint='courses')
 api.add_resource(CourseRecordForUser, '/courses/user/<int:user_id>', endpoint='courses_for_user')
 api.add_resource(CourseRecordById, '/courses/<int:id>', endpoint='coursebyid')
-api.add_resource(CourseCategoryResource, '/courses/<category_name>', endpoint='coursebycategory')
-api.add_resource(CourseDurationResource, '/courses/filter/<int:duration>', 
+api.add_resource(CourseCategoryResource, '/courses/category/<category_name>', endpoint='coursebycategory')
+api.add_resource(CourseDurationResource, '/courses/duration/<int:duration>', 
 endpoint='coursebyduration')
-api.add_resource(CourseLevelResource, '/courses/filter/<level>', 
+api.add_resource(CourseLevelResource, '/courses/level/<level>', 
 endpoint='coursebylevel')
+
+    # order resources
 api.add_resource(OrderResource,'/orders', endpoint='order')
 api.add_resource(OrderRecordById, '/orders/<int:id>', endpoint='ordersbyid')
-api.add_resource(MerchandiseResource, '/merchandises/', endpoint='merchandises')
+
+    # merchandise resource
+api.add_resource(MerchandiseResource, '/merchandises', endpoint='merchandises')
 
 @app.errorhandler(NotFound)
 def handle_not_found(e):

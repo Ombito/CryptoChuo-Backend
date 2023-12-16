@@ -40,34 +40,43 @@ class Index(Resource):
     # login route
 class LoginUser(Resource):
     def post(self):
-        try:
-            data = request.get_json()
-            print("Received JSON data:", data)
+        email  = request.get_json().get('email')
+        password = request.get_json().get("password")
 
-            email  = data.get('email')
-            password = data.get("password")
-            user = User.query.filter(User.email == email).first()
+        user = User.query.filter(User.email == email).first()
 
-            try:
-                if email and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
-                    session['user_id']=user.id
-                    session['user_type'] = 'user'
+        if user:
+            if user.authenticate(password):
+                session['user_id']=user.id
+                session['user_type'] = 'user'
 
-                    return make_response(jsonify(user.to_dict()), 201)
-                        
-                else:
-                    return make_response(jsonify({"error": "Invalid email or password"}), 401)
+                return make_response(jsonify(user.to_dict()), 201)
                 
-            except bcrypt.exceptions as e:
-                app.logger.error(f"Invalid password hash: {str(e)}")
-                return make_response(jsonify({"error": "Invalid password hash"}), 500)
+            else:
+                return make_response(jsonify({"error": "username or password is incorrect"}), 401)
+       
+        return make_response(jsonify({"error": "User not Registered"}), 404)
+
+            # try:
+            #     if email and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
+            #         session['user_id']=user.id
+            #         session['user_type'] = 'user'
+
+            #         return make_response(jsonify(user.to_dict()), 201)
+                        
+            #     else:
+            #         return make_response(jsonify({"error": "Invalid email or password"}), 401)
+                
+            # except bcrypt.exceptions as e:
+            #     app.logger.error(f"Invalid password hash: {str(e)}")
+            #     return make_response(jsonify({"error": "Invalid password hash"}), 500)
             
             # print("User not registered.") 
             # return make_response(jsonify({"error": "User not Registered"}), 404)
         
-        except Exception as e:
-            print(f"Error during login: {str(e)}")
-            return make_response(jsonify({"error": "An unexpected error occurred"}), 500)
+        # except Exception as e:
+        #     print(f"Error during login: {str(e)}")
+        #     return make_response(jsonify({"error": "An unexpected error occurred"}), 500)
    
      # signup resource
 class SignupUser(Resource):

@@ -17,10 +17,11 @@ class User(db.Model, SerializerMixin):
     _password_hash = db.Column(db.String(100), nullable=False)
 
     courses = db.relationship('Course', back_populates='user')
-    orders = db.relationship('OrderRecord', back_populates='user')
+    all_orders = db.relationship('OrderRecord', back_populates='user')
     enrollments = db.relationship('Enrollment', back_populates='user')
 
-    serialize_rules = ('-courses.user', '-orders.user', '-enrollments.user._password_hash',)
+    serialize_rules = ('-courses.user', '-all_orders.user',)
+    # serialize_rules = ('-courses.user', '-orders.user', '-enrollments.user',)
 
     @hybrid_property
     def password_hash(self):
@@ -39,6 +40,7 @@ class Course(db.Model, SerializerMixin):
 
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
     image = db.Column(db.String(100))
     description = db.Column(db.Text, nullable=False)
     price = db.Column(db.Float, nullable=False)
@@ -50,12 +52,12 @@ class Course(db.Model, SerializerMixin):
     durations = db.relationship('CourseDurationAssociation', back_populates='course')
     levels = db.relationship('CourseLevel', back_populates='course')
 
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    
     user = db.relationship('User', back_populates='courses')
 
     duration_associations = db.relationship('CourseDurationAssociation', back_populates='course', overlaps="durations")
-
-    serialize_rules = ('-enrollments.course', '-user.courses', '-categories.course', '-durations.course', '-levels.course',)
+    serialize_rules = ('-user.courses',)
+    # serialize_rules = ('-enrollments.course', '-user.courses', '-categories.course', '-durations.course', '-levels.course',)
 
 
 class Category(db.Model, SerializerMixin):
@@ -115,7 +117,7 @@ class CourseLevel(db.Model, SerializerMixin):
 
 
 class OrderRecord(db.Model, SerializerMixin):
-    __tablename__ = 'orders'
+    __tablename__ = 'orders_table'
 
     id = db.Column(db.Integer, primary_key=True)
     item = db.Column(db.String, nullable=False)
@@ -123,12 +125,13 @@ class OrderRecord(db.Model, SerializerMixin):
     description = db.Column(db.String, nullable=False)
     order_date = db.Column(db.DateTime, default=db.func.current_timestamp())
     quantity = db.Column(db.Integer, nullable=False)
+    location = db.Column(db.String, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
-    user = db.relationship('User', back_populates='orders')
+    user = db.relationship('User', back_populates='all_orders')
 
     merchandise_id = db.Column(db.Integer, db.ForeignKey('merchandises.id'))
-    merchandise = db.relationship('Merchandise', back_populates='orders')
+    merchandise = db.relationship('Merchandise', back_populates='orders_table')
 
     serialize_rules = ('-user.all_orders',)
 
@@ -145,7 +148,7 @@ class Merchandise(db.Model, SerializerMixin):
 
     orders = db.relationship('OrderRecord', back_populates='merchandise')
 
-    serialize_rules = ('-orders.merchandise',)
+    # serialize_rules = ('-orders.merchandise',)
 
 
 class Enrollment(db.Model, SerializerMixin):

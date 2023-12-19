@@ -1,7 +1,7 @@
 from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
-from models import User, db, Course, OrderRecord, Category, CourseDuration, CourseLevel, Merchandise, bcrypt
+from models import User, db, Course, OrderRecord, Merchandise, bcrypt
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
@@ -48,8 +48,6 @@ class LoginUser(Resource):
         if user:
             if user.authenticate(password):
                 session['user_id']=user.id
-                session['user_type'] = 'user'
-
                 return make_response(jsonify(user.to_dict()), 201)
                 
             else:
@@ -57,27 +55,7 @@ class LoginUser(Resource):
        
         return make_response(jsonify({"error": "User not Registered"}), 404)
 
-            # try:
-            #     if email and bcrypt.checkpw(password.encode('utf-8'), user.password_hash.encode('utf-8')):
-            #         session['user_id']=user.id
-            #         session['user_type'] = 'user'
-
-            #         return make_response(jsonify(user.to_dict()), 201)
-                        
-            #     else:
-            #         return make_response(jsonify({"error": "Invalid email or password"}), 401)
-                
-            # except bcrypt.exceptions as e:
-            #     app.logger.error(f"Invalid password hash: {str(e)}")
-            #     return make_response(jsonify({"error": "Invalid password hash"}), 500)
-            
-            # print("User not registered.") 
-            # return make_response(jsonify({"error": "User not Registered"}), 404)
         
-        # except Exception as e:
-        #     print(f"Error during login: {str(e)}")
-        #     return make_response(jsonify({"error": "An unexpected error occurred"}), 500)
-   
      # signup resource
 class SignupUser(Resource):
     def post(self):
@@ -91,7 +69,7 @@ class SignupUser(Resource):
 
             if full_name and username and email and password:
                 new_user = User(full_name=full_name, username=username, email=email)
-                new_user.password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
+                new_user.password_hash = password
                 db.session.add(new_user)
                 db.session.commit()
 

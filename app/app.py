@@ -48,12 +48,12 @@ class LoginUser(Resource):
         if user:
             if user.authenticate(password):
                 session['user_id']=user.id
-                return make_response(jsonify(user.to_dict()), 201)
+                return make_response(jsonify(user.to_dict()), 200)
                 
             else:
-                return make_response(jsonify({"error": "username or password is incorrect"}), 401)
-       
-        return make_response(jsonify({"error": "User not Registered"}), 404)
+                return make_response(jsonify({"error": "Username or password is incorrect"}), 401)
+        else:
+            return make_response(jsonify({"error": "User not Registered"}), 404)
 
         
      # signup resource
@@ -97,11 +97,18 @@ class Logout(Resource):
  #check session   
 class CheckSession(Resource):
     def get(self):
-        user = User.query.filter(User.id == session.get('user_id')).first()
-        if user:
-            return jsonify(user.to_dict()),200
-        else:
-            return {"error": "user not in session:please signin/login"},401
+        new_user = session.get('new_user')
+        if new_user == 'user':
+            user = User.query.filter(User.id == session.get('user_id')).first()
+            if user:
+                response= make_response(jsonify(user.to_dict()),200)
+                response.content_type='application/json'
+                return response
+        
+            else:
+                return make_response(jsonify({"error": "user not in session: please signin/login"}), 401)
+    
+        
 
     #  all users route
 class UserResource(Resource):
@@ -194,33 +201,6 @@ class CourseRecordForUser(Resource):
             return {"message": "Course record deleted successfully"}, 200
         else:
             return {"error": "Course record not found"}, 404
-
-
-    #filter course by category name
-class CourseCategoryResource(Resource):
-    def get(self,name):
-        pass
-        category=Category.query.filter_by(name=name).first().to_dict()
-
-        return make_response(jsonify(category),200)
-
-
-    #filter course by duration
-class CourseDurationResource(Resource):
-    def get(self, duration):
-        pass
-        duration=CourseDuration.query.filter_by(duration=duration).first().to_dict()
-
-        return make_response(jsonify(duration),200)
-    
-
-    #filter course by level
-class CourseLevelResource(Resource):
-    def get(self, level):
-        pass
-        level=CourseLevel.query.filter_by(level=level).first().to_dict()
-
-        return make_response(jsonify(level),200)
     
 
     # orders route
@@ -329,11 +309,6 @@ api.add_resource(Logout, '/logout', endpoint='logout')
 api.add_resource(CourseResource, '/courses', endpoint='courses')
 api.add_resource(CourseRecordForUser, '/courses/user/<int:user_id>', endpoint='courses_for_user')
 api.add_resource(CourseRecordById, '/courses/<int:id>', endpoint='coursebyid')
-api.add_resource(CourseCategoryResource, '/courses/category/<category_name>', endpoint='coursebycategory')
-api.add_resource(CourseDurationResource, '/courses/duration/<int:duration>', 
-endpoint='coursebyduration')
-api.add_resource(CourseLevelResource, '/courses/level/<level>', 
-endpoint='coursebylevel')
 
     # order resources
 api.add_resource(OrderResource,'/orders', endpoint='order')
@@ -342,6 +317,19 @@ api.add_resource(OrderRecordById, '/orders/<int:id>', endpoint='ordersbyid')
     # merchandise resource
 api.add_resource(MerchandiseResource, '/merchandises', endpoint='merchandises')
 
+@app.before_request
+def before_request():
+    if request.method == 'OPTIONS':
+        headers = {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true',
+            'Content-Type': 'application/json'
+        }
+        return make_response('', 200, headers)
+    
+    
 @app.errorhandler(NotFound)
 def handle_not_found(e):
     response = make_response(

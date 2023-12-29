@@ -6,9 +6,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 db = SQLAlchemy()
 bcrypt = Bcrypt()
 
-#relationships
-#one user can have many courses - 1 to many
-#1 user can have many orders
 
 class User(db.Model, SerializerMixin):
     __tablename__ = 'users'
@@ -49,7 +46,8 @@ class Course(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Float, nullable=False)
     enrollment_date = db.Column(db.DateTime, default=db.func.current_timestamp())
-
+    is_trending = db.Column(db.String)
+    
     serialize_rules = ('-user.courses',)
 
 

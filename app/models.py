@@ -67,14 +67,15 @@ class OrderRecord(db.Model, SerializerMixin):
 
 
 class Merchandise(db.Model, SerializerMixin):
-    __tablename__ = 'merchandise_table'
+    __tablename__ = 'merchandises'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
-    image = db.Column(db.String(100))
+    image = db.Column(db.String)
     price = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Float, nullable=False)
+    category = db.Column(db.String)
 
 
 

@@ -43,7 +43,6 @@ with app.app_context():
         {'title': 'Blockchain and Legal Implications', 'user_id': 4, 'description': 'Understand the legal implications and challenges of blockchain technology', 'image': 'new image', 'category': 'Business', 'price': 49.99, 'rating': 4.6, 'duration': '8 hours', 'level': 'Intermediate', 'is_trending': 'true'},
         {'title': 'Blockchain and Supply Chain Management', 'user_id': 2, 'description': 'Learn how blockchain is revolutionizing supply chain management.', 'image': 'new image', 'category': 'Business', 'price': 39.99, 'rating': 4.6, 'duration': '12 hours', 'level': 'Intermediate'},
         {'title': 'Blockchain and Environmental Sustainability', 'user_id': 4, 'description': 'Explore the role of blockchain in promoting environmental sustainability.', 'image': 'new image', 'category': 'Technology', 'price': 29.99, 'rating': 4.7, 'duration': '12 hours', 'level': 'Intermediate'},
-
     ]
 
     for course_info in courses_data:
@@ -52,7 +51,36 @@ with app.app_context():
 
     db.session.commit()
 
-   
+
+    merchandise_data = [
+        {'name': 'Blockchain T-Shirt', 'description': 'High-quality cotton T-shirt with a blockchain-themed design.', 'image': 'new image', 'price': 19.99, 'rating': 4.5},
+        {'name': 'Cryptocurrency Mug', 'description': 'Ceramic mug featuring popular cryptocurrency logos.', 'image': 'new image', 'price': 12.99, 'rating': 4.8},
+        {'name': 'Crypto Backpack', 'description': 'Spacious backpack with a modern blockchain-inspired pattern.', 'image': 'new image', 'price': 39.99, 'rating': 4.2},
+        {'name': 'Blockchain Stickers Set', 'description': 'Set of high-quality vinyl stickers featuring blockchain symbols..', 'image': 'new image', 'price': 8.99, 'rating': 4.4},
+        {'name': 'Bitcoin Hoodie', 'description': 'Warm hoodie with a Bitcoin logo for crypto enthusiasts.', 'image': 'new image', 'price': 29.99, 'rating': 4.5},
+        {'name': 'Ethereum Mousepad', 'description': 'Large mousepad featuring the Ethereum logo and blockchain graphics.', 'image': 'new image', 'price': 14.99, 'rating': 4.0},
+        {'name': 'Litecoin Keychain', 'description': 'Durable keychain with a Litecoin symbol for your keys.', 'image': 'new image', 'price': 9.99, 'rating': 4.4},
+        {'name': 'Crypto Art Poster', 'description': 'Artistic poster depicting the beauty of blockchain and cryptocurrency.', 'image': 'new image', 'price': 24.99, 'rating': 4.7},
+        {'name': 'Ripple Water Bottle', 'description': 'Stainless steel water bottle featuring the Ripple logo.', 'image': 'new image', 'price': 19.99, 'rating': 4.0},
+        {'name': 'Smart Contracts Notebook', 'description': 'Elegant notebook with smart contract diagrams for jotting down your ideas.', 'image': 'new image', 'price': 11.99, 'rating': 4.5},
+        {'name': 'NFT Art Canvas', 'description': 'Canvas print featuring exclusive NFT artwork from a renowned crypto artist.', 'image': 'new image', 'price': 49.99, 'rating': 4.8},
+        {'name': 'Cardano Cap', 'description': 'Adjustable cap with the Cardano logo for sun protection.', 'image': 'new image', 'price': 21.99, 'rating': 3.8},
+        {'name': 'Crypto Puzzle Set', 'description': 'Challenging puzzle set with cryptocurrency-themed pieces.', 'image': 'new image', 'price': 21.99, 'rating': 3.9},
+        {'name': 'Tron USB Drive', 'description': 'High-speed USB drive with the Tron logo for secure data storage.', 'image': 'new image', 'price': 18.99, 'rating': 4.8},
+        {'name': 'Monero Socks', 'description': 'Comfortable socks with Monero symbols for a touch of crypto style.', 'image': 'new image', 'price': 8.99, 'rating': 4.1},
+        {'name': 'Blockchain Watch', 'description': 'Elegant wristwatch with blockchain-inspired design and features.', 'image': 'new image', 'price': 69.99, 'rating': 4.5},
+        {'name': 'Stellar Lumens Phone Case', 'description': 'Durable phone case with Stellar Lumens logo for various phone models.', 'image': 'new image', 'price': 15.99, 'rating': 3.9},
+        {'name': 'Blockchain Puzzle Book', 'description': 'Interactive puzzle book filled with blockchain-related challenges.', 'image': 'new image', 'price': 14.99, 'rating': 4.5},
+        {'name': 'Tezos Tea Set', 'description': 'Fine porcelain tea set with Tezos blockchain motifs for tea enthusiasts.', 'image': 'new image', 'price': 34.99, 'rating': 4.0},
+        {'name': 'EOS Sunglasses', 'description': 'Stylish sunglasses with the EOS logo for protection under the sun.', 'image': 'new image', 'price': 25.99, 'rating': 4.8},
+    ]
+
+    for merchandise_info in merchandise_data:
+        new_merchandise = Merchandise(**merchandise_info)
+        db.session.add(new_merchandise)
+
+    db.session.commit()
+
 
    
 db.session.commit()

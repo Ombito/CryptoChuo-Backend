@@ -1,7 +1,7 @@
 from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
-from models import User, db, Course, OrderRecord, Merchandise, bcrypt
+from models import User, db, Course, OrderRecord, Merchandise, Contact, Newsletter, bcrypt
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
@@ -108,7 +108,6 @@ class CheckSession(Resource):
             else:
                 return make_response(jsonify({"error": "user not in session: please signin/login"}), 401)
     
-        
 
     #  all users route
 class UserResource(Resource):
@@ -116,7 +115,6 @@ class UserResource(Resource):
         users = [user.to_dict() for user in User.query.all()]
 
         return make_response(jsonify(users),200) 
-
 
 
     # course route
@@ -296,6 +294,54 @@ class MerchandiseResource(Resource):
         return {"error": "Merchandise details must be added"}, 422
     
 
+    # contact route
+class ContactResource(Resource):
+    def get(self):
+        all_contacts = [contact.to_dict() for contact in Contact.query.all()]
+        
+        return make_response(jsonify(all_contacts),200)
+   
+        # post contact records
+    def post(self):
+        data = request.get_json()
+
+        name=data.get('name')
+        phone_number=data.get('phone_number')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
+       
+        if email and name and subject and phone_number:
+            new_contact = Contact( name=name, phone_number= phone_number, email=email, subject=subject, message=message, )
+            
+            db.session.add(new_contact)
+            db.session.commit()
+
+            return make_response(new_contact.to_dict(), 201) 
+        return {"error": "Contact details must be added"}, 422
+
+    # newsletter route
+class NewsletterResource(Resource):
+    def get(self):
+        all_newsletters = [newsletter.to_dict() for newsletter in Newsletter.query.all()]
+        
+        return make_response(jsonify(all_newsletters),200)
+   
+        # post newsletter records
+    def post(self):
+        data = request.get_json()
+        email = data.get('email')
+       
+        if email:
+            new_newsletter = Newsletter( email=email )
+            
+            db.session.add(new_newsletter)
+            db.session.commit()
+
+            return make_response(new_newsletter.to_dict(), 201) 
+        return {"error": "Newsletter details must be added"}, 422
+    
+    # home resource
 api.add_resource(Index,'/', endpoint='landing')
 
     # user resources
@@ -316,6 +362,13 @@ api.add_resource(OrderRecordById, '/orders/<int:id>', endpoint='ordersbyid')
 
     # merchandise resource
 api.add_resource(MerchandiseResource, '/merchandises', endpoint='merchandises')
+
+    # contact resource
+api.add_resource(ContactResource, '/contact', endpoint='contact')
+
+    # newsletter resource
+api.add_resource(NewsletterResource, '/newsletters', endpoint='newsletters')
+
 
 @app.before_request
 def before_request():

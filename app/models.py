@@ -78,4 +78,20 @@ class Merchandise(db.Model, SerializerMixin):
     category = db.Column(db.String)
 
 
+class Contact(db.Model, SerializerMixin):
+    __tablename__ = 'contacts'
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    phone_number = db.Column(db.Integer, nullable=False)
+    email = db.Column(db.String, nullable=False)
+    subject = db.Column(db.String, nullable=False)
+    message = db.Column(db.Text, nullable=False)
+
+
+class Newsletter(db.Model, SerializerMixin):
+    __tablename__ = 'newsletters'
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String, nullable=False)
 

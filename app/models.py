@@ -46,7 +46,7 @@ class Course(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Float, nullable=False)
     enrollment_date = db.Column(db.DateTime, default=db.func.current_timestamp())
-    is_trending = db.Column(db.String)
+    grouping = db.Column(db.String)
     
     serialize_rules = ('-user.courses',)
 
@@ -76,6 +76,8 @@ class Merchandise(db.Model, SerializerMixin):
     price = db.Column(db.Float, nullable=False)
     rating = db.Column(db.Float, nullable=False)
     category = db.Column(db.String)
+    quantity = db.Column(db.Integer, default=1)
+    grouping = db.Column(db.String) 
 
 
 class Contact(db.Model, SerializerMixin):

@@ -1,20 +1,23 @@
 from flask_cors import CORS
 from flask import Flask, jsonify, request, session, make_response
 from flask_restful import Api, Resource
-from models import User, db, Course, OrderRecord, Merchandise, Contact, Newsletter, bcrypt
+from app.models import User, db, Course, OrderRecord, Merchandise, Contact, Newsletter, bcrypt
 from flask_migrate import Migrate
 from werkzeug.exceptions import NotFound
 import os
-from datetime import timedelta
+from sqlalchemy import and_, func
+from datetime import datetime, timedelta
 from flask_session import Session
 import secrets
+import jwt
+from sqlalchemy.exc import IntegrityError
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}, support_credentials=True)
+CORS(app, resources={r"/*": {"origins": "*"}}, support_credentials=True, allow_headers=["Content-Type", "Authorization"])
 
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///mydb.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URI')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = secrets.token_hex(16)
 app.config['SESSION_TYPE'] = 'filesystem'
@@ -47,8 +50,8 @@ class LoginUser(Resource):
 
         if user:
             if user.authenticate(password):
-                session['user_id']=user.id
-                return make_response(jsonify(user.to_dict()), 200)
+                token = jwt.encode({'user_id': user.id}, app.config['SECRET_KEY'], algorithm='HS256')
+                return {'token': token}, 200
                 
             else:
                 return make_response(jsonify({"error": "Username or password is incorrect"}), 401)
@@ -97,16 +100,27 @@ class Logout(Resource):
  #check session   
 class CheckSession(Resource):
     def get(self):
-        new_user = session.get('new_user')
-        if new_user == 'user':
-            user = User.query.filter(User.id == session.get('user_id')).first()
-            if user:
-                response= make_response(jsonify(user.to_dict()),200)
-                response.content_type='application/json'
-                return response
-        
+        auth_header = request.headers.get('Authorization')
+        if not auth_header:
+            return {'error': 'Authorization header missing'}, 401
+
+        try:
+            token = auth_header.split()[1]
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload.get('user_id')
+            if user_id:
+                user = User.query.get(user_id)
+                if user:
+                    return user.to_dict(), 200
+                else:
+                    return {'error': 'User not found'}, 404
             else:
-                return make_response(jsonify({"error": "user not in session: please signin/login"}), 401)
+                return {'error': 'Invalid token'}, 401
+        except jwt.ExpiredSignatureError:
+            return {'error': 'Token has expired'}, 401
+        except jwt.InvalidTokenError:
+            return {'error': 'Invalid token'}, 401
+
     
 
     #  all users route
@@ -116,7 +130,19 @@ class UserResource(Resource):
 
         return make_response(jsonify(users),200) 
 
+class UsersByID(Resource):
+    def get(self, id): 
+        
+        response_dict = User.query.filter_by(id=id).first().to_dict()
 
+        response = make_response(
+            jsonify(response_dict),
+            200,
+        )
+
+        return response
+    
+    
     # course route
 class CourseResource(Resource):
     def get(self):
@@ -346,6 +372,7 @@ api.add_resource(Index,'/', endpoint='landing')
 
     # user resources
 api.add_resource(UserResource, '/users', endpoint='users')
+api.add_resource(UsersByID, '/users/<int:id>')
 api.add_resource(CheckSession,'/session_user',endpoint='session_user' )
 api.add_resource(SignupUser, '/signup_user', endpoint='signup')
 api.add_resource(LoginUser, '/login_user', endpoint='login')
